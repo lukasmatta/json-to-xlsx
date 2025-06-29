@@ -4,11 +4,11 @@ use std::io::{Cursor, Read, Seek, Write};
 use serde_json::{Deserializer, Value};
 use zip::write::FileOptions;
 
-use crate::result::{XlsxExporResult, XlsxExportError};
+use crate::result::{XlsxExportResult, XlsxExportError};
 
 pub mod result;
 
-pub fn json_to_xlsx(reader: impl Read, mut output: impl Write) -> XlsxExporResult<()> {
+pub fn json_to_xlsx(reader: impl Read, mut output: impl Write) -> XlsxExportResult<()> {
     let mut stream = Deserializer::from_reader(reader).into_iter::<Value>();
 
     let main_array: Vec<Value> = match stream.next() {

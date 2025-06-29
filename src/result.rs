@@ -2,7 +2,7 @@ use serde_json::Error as SerdeJsonError;
 use std::{fmt, io};
 use zip::result::ZipError;
 
-pub type XlsxExporResult<T> = Result<T, XlsxExportError>;
+pub type XlsxExportResult<T> = Result<T, XlsxExportError>;
 
 #[derive(Debug)]
 #[non_exhaustive]
