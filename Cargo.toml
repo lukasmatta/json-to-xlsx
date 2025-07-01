@@ -7,7 +7,7 @@ authors = [
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/lukasmatta/json-to-xlsx.git"
-keywords = ["xlsx", "json", "excel", "convert", "json to xlsx", "json to excel"]
+keywords = ["xlsx", "json", "excel", "convert", "json to excel"]
 description = """
 Simple library to convert JSON files to Excel (xlsx).
 """
