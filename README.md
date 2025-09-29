@@ -18,6 +18,6 @@ let buf_reader = BufReader::new(json_input);
 
 match json_to_xlsx(buf_reader, xlsx_output) {
     Ok(_) => println!("Success!"),
-    Err(e) => println!("{}", e),
+    Err(e) => println!("{e}"),
 }
 ```
