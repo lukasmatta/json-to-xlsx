@@ -128,7 +128,7 @@ fn write_sheet1<W: Write + Seek>(
         let col = column_letter(i + 1);
         xml.push_str(&format!(
             r#"<c r="{}{}" t="str"><v>{}</v></c>"#,
-            col, row_idx, header
+            col, row_idx, xml_escape(header)
         ));
     }
     xml.push_str("</row>");
@@ -146,7 +146,7 @@ fn write_sheet1<W: Write + Seek>(
                 });
                 xml.push_str(&format!(
                     r#"<c r="{}{}" t="str"><v>{}</v></c>"#,
-                    col, row_idx, value
+                    col, row_idx, xml_escape(&value)
                 ));
             }
             xml.push_str("</row>");
@@ -158,6 +158,21 @@ fn write_sheet1<W: Write + Seek>(
     xml.push_str("</sheetData></worksheet>");
     zip.write_all(xml.as_bytes())
         .map_err(zip::result::ZipError::Io)
+}
+
+fn xml_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for ch in s.chars() {
+        match ch {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 fn column_letter(mut n: usize) -> String {
@@ -185,6 +200,15 @@ mod tests {
             result.err()
         );
         output
+    }
+
+    fn extract_sheet_xml(xlsx_bytes: Vec<u8>) -> String {
+        let cursor = Cursor::new(xlsx_bytes);
+        let mut archive = zip::ZipArchive::new(cursor).expect("valid zip");
+        let mut file = archive.by_name("xl/worksheets/sheet1.xml").expect("sheet1.xml present");
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).expect("valid utf-8");
+        contents
     }
 
     #[test]
@@ -241,6 +265,22 @@ mod tests {
         let mut output = Vec::new();
         let result = json_to_xlsx(reader, &mut output);
         assert!(matches!(result, Err(XlsxExportError::JsonError(_))));
+    }
+
+    #[test]
+    fn test_xml_special_characters_in_values() {
+        let json = r#"[{"name": "Tom & Jerry", "note": "<b>bold</b>"}]"#;
+        let xml = extract_sheet_xml(run_and_extract_xlsx(json));
+        assert!(xml.contains("Tom &amp; Jerry"), "& should be escaped");
+        assert!(xml.contains("&lt;b&gt;bold&lt;/b&gt;"), "< > should be escaped");
+    }
+
+    #[test]
+    fn test_xml_special_characters_in_headers() {
+        let json = r#"[{"a & b": 1, "<col>": 2}]"#;
+        let xml = extract_sheet_xml(run_and_extract_xlsx(json));
+        assert!(xml.contains("a &amp; b"), "& in header should be escaped");
+        assert!(xml.contains("&lt;col&gt;"), "< > in header should be escaped");
     }
 
     #[test]
