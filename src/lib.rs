@@ -8,7 +8,7 @@ use std::io::{Cursor, Read, Seek, Write};
 use serde_json::{Deserializer, Value};
 use zip::write::FileOptions;
 
-use crate::result::{XlsxExportResult, XlsxExportError};
+use crate::result::{XlsxExportError, XlsxExportResult};
 
 pub mod result;
 
@@ -160,7 +160,9 @@ fn write_sheet1<W: Write + Seek>(
         let col = column_letter(i + 1);
         xml.push_str(&format!(
             r#"<c r="{}{}" t="str"><v>{}</v></c>"#,
-            col, row_idx, xml_escape(header)
+            col,
+            row_idx,
+            xml_escape(header)
         ));
     }
     xml.push_str("</row>");
@@ -192,12 +194,24 @@ fn write_sheet1<W: Write + Seek>(
 
 fn cell_xml(cell_ref: &str, value: &Value) -> String {
     match value {
-        Value::String(s) => format!(r#"<c r="{}" t="str"><v>{}</v></c>"#, cell_ref, xml_escape(s)),
+        Value::String(s) => format!(
+            r#"<c r="{}" t="str"><v>{}</v></c>"#,
+            cell_ref,
+            xml_escape(s)
+        ),
         Value::Number(n) => format!(r#"<c r="{}"><v>{}</v></c>"#, cell_ref, n),
-        Value::Bool(b) => format!(r#"<c r="{}" t="b"><v>{}</v></c>"#, cell_ref, if *b { 1 } else { 0 }),
+        Value::Bool(b) => format!(
+            r#"<c r="{}" t="b"><v>{}</v></c>"#,
+            cell_ref,
+            if *b { 1 } else { 0 }
+        ),
         Value::Array(_) | Value::Object(_) => {
             let s = value.to_string();
-            format!(r#"<c r="{}" t="str"><v>{}</v></c>"#, cell_ref, xml_escape(&s))
+            format!(
+                r#"<c r="{}" t="str"><v>{}</v></c>"#,
+                cell_ref,
+                xml_escape(&s)
+            )
         }
         Value::Null => String::new(),
     }
@@ -248,7 +262,9 @@ mod tests {
     fn extract_sheet_xml(xlsx_bytes: Vec<u8>) -> String {
         let cursor = Cursor::new(xlsx_bytes);
         let mut archive = zip::ZipArchive::new(cursor).expect("valid zip");
-        let mut file = archive.by_name("xl/worksheets/sheet1.xml").expect("sheet1.xml present");
+        let mut file = archive
+            .by_name("xl/worksheets/sheet1.xml")
+            .expect("sheet1.xml present");
         let mut contents = String::new();
         file.read_to_string(&mut contents).expect("valid utf-8");
         contents
@@ -315,7 +331,10 @@ mod tests {
         let json = r#"[{"name": "Tom & Jerry", "note": "<b>bold</b>"}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
         assert!(xml.contains("Tom &amp; Jerry"), "& should be escaped");
-        assert!(xml.contains("&lt;b&gt;bold&lt;/b&gt;"), "< > should be escaped");
+        assert!(
+            xml.contains("&lt;b&gt;bold&lt;/b&gt;"),
+            "< > should be escaped"
+        );
     }
 
     #[test]
@@ -323,7 +342,10 @@ mod tests {
         let json = r#"[{"a & b": 1, "<col>": 2}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
         assert!(xml.contains("a &amp; b"), "& in header should be escaped");
-        assert!(xml.contains("&lt;col&gt;"), "< > in header should be escaped");
+        assert!(
+            xml.contains("&lt;col&gt;"),
+            "< > in header should be escaped"
+        );
     }
 
     #[test]
@@ -331,8 +353,14 @@ mod tests {
         let json = r#"[{"score": 42, "ratio": 3.14}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
         // Data is in row 2; number cells must have no t= attribute
-        assert!(xml.contains(r#"<c r="A2"><v>42</v></c>"#), "integer cell should have no type attr");
-        assert!(xml.contains(r#"<c r="B2"><v>3.14</v></c>"#), "float cell should have no type attr");
+        assert!(
+            xml.contains(r#"<c r="A2"><v>42</v></c>"#),
+            "integer cell should have no type attr"
+        );
+        assert!(
+            xml.contains(r#"<c r="B2"><v>3.14</v></c>"#),
+            "float cell should have no type attr"
+        );
     }
 
     #[test]
@@ -348,14 +376,20 @@ mod tests {
     fn test_null_produces_empty_cell() {
         let json = r#"[{"name": "Alice", "age": null}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
-        assert!(!xml.contains("null"), "null should not appear as the string 'null'");
+        assert!(
+            !xml.contains("null"),
+            "null should not appear as the string 'null'"
+        );
     }
 
     #[test]
     fn test_string_with_quotes_escaped() {
         let json = r#"[{"msg": "say \"hi\""}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
-        assert!(xml.contains("say &quot;hi&quot;"), "quotes inside strings should be XML-escaped");
+        assert!(
+            xml.contains("say &quot;hi&quot;"),
+            "quotes inside strings should be XML-escaped"
+        );
     }
 
     #[test]
@@ -365,8 +399,14 @@ mod tests {
         // should appear as row 3 (not row 4 with a gap).
         let json = r#"[{"a": 1}, "oops", {"a": 2}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
-        assert!(xml.contains(r#"<row r="2">"#), "first data row should be row 2");
-        assert!(xml.contains(r#"<row r="3">"#), "second data row should be row 3, no gap");
+        assert!(
+            xml.contains(r#"<row r="2">"#),
+            "first data row should be row 2"
+        );
+        assert!(
+            xml.contains(r#"<row r="3">"#),
+            "second data row should be row 3, no gap"
+        );
         assert!(!xml.contains(r#"<row r="4">"#), "there should be no row 4");
     }
 
