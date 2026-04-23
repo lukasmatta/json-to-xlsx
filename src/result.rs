@@ -41,6 +41,12 @@ impl std::error::Error for XlsxExportError {
     }
 }
 
+impl From<SerdeJsonError> for XlsxExportError {
+    fn from(value: SerdeJsonError) -> Self {
+        Self::JsonError(value)
+    }
+}
+
 impl From<ZipError> for XlsxExportError {
     fn from(value: ZipError) -> Self {
         Self::ZipError(value)

@@ -149,9 +149,8 @@ fn write_sheet1<W: Write + Seek>(
                 xml.push_str(&cell);
             }
             xml.push_str("</row>");
+            row_idx += 1;
         }
-
-        row_idx += 1;
     }
 
     xml.push_str("</sheetData></worksheet>");
@@ -325,6 +324,18 @@ mod tests {
         let json = r#"[{"msg": "say \"hi\""}]"#;
         let xml = extract_sheet_xml(run_and_extract_xlsx(json));
         assert!(xml.contains("say &quot;hi&quot;"), "quotes inside strings should be XML-escaped");
+    }
+
+    #[test]
+    fn test_non_object_rows_skipped_without_gap() {
+        // Mixed array: valid object, non-object, valid object.
+        // The non-object should be silently skipped and the third row
+        // should appear as row 3 (not row 4 with a gap).
+        let json = r#"[{"a": 1}, "oops", {"a": 2}]"#;
+        let xml = extract_sheet_xml(run_and_extract_xlsx(json));
+        assert!(xml.contains(r#"<row r="2">"#), "first data row should be row 2");
+        assert!(xml.contains(r#"<row r="3">"#), "second data row should be row 3, no gap");
+        assert!(!xml.contains(r#"<row r="4">"#), "there should be no row 4");
     }
 
     #[test]
