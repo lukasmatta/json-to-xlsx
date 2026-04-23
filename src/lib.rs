@@ -1,4 +1,8 @@
-//! Simple library to convert JSON files to Excel (xlsx).
+//! Simple library to convert a JSON array of objects to an Excel (xlsx) file.
+//!
+//! The input must be a JSON array where every element is a JSON object. Keys
+//! from the first object become the column headers. Missing fields in later
+//! objects produce empty cells. Non-object elements are silently skipped.
 use std::io::{Cursor, Read, Seek, Write};
 
 use serde_json::{Deserializer, Value};
@@ -8,6 +12,34 @@ use crate::result::{XlsxExportResult, XlsxExportError};
 
 pub mod result;
 
+/// Convert a JSON array of objects to an xlsx file.
+///
+/// `reader` must contain a JSON array of objects. The keys of the first object
+/// determine the column headers and their order. `output` receives the raw xlsx
+/// bytes (a zip archive).
+///
+/// # Errors
+///
+/// Returns [`XlsxExportError::NotAnArray`] if the root value is not an array,
+/// [`XlsxExportError::EmptyArray`] if the array is empty,
+/// [`XlsxExportError::ExpectedObject`] if the first element is not an object,
+/// [`XlsxExportError::JsonError`] on malformed JSON, and
+/// [`XlsxExportError::IoError`] / [`XlsxExportError::ZipError`] on write failures.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::fs::File;
+/// use std::io::BufReader;
+/// use json_to_xlsx::json_to_xlsx;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let input = BufReader::new(File::open("input.json")?);
+///     let output = File::create("output.xlsx")?;
+///     json_to_xlsx(input, output)?;
+///     Ok(())
+/// }
+/// ```
 pub fn json_to_xlsx(reader: impl Read, mut output: impl Write) -> XlsxExportResult<()> {
     let mut stream = Deserializer::from_reader(reader).into_iter::<Value>();
 

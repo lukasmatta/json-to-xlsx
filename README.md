@@ -11,13 +11,14 @@ How to use
 ----
 
 ```rust
-let json_input = File::open("input.json").unwrap();
-let xlsx_output = File::create("output.xlsx").unwrap();
+use std::fs::File;
+use std::io::BufReader;
+use json_to_xlsx::json_to_xlsx;
 
-let buf_reader = BufReader::new(json_input);
-
-match json_to_xlsx(buf_reader, xlsx_output) {
-    Ok(_) => println!("Success!"),
-    Err(e) => println!("{e}"),
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let input = BufReader::new(File::open("input.json")?);
+    let output = File::create("output.xlsx")?;
+    json_to_xlsx(input, output)?;
+    Ok(())
 }
 ```
