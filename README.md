@@ -4,7 +4,7 @@
 [![Crates.io downloads](https://img.shields.io/crates/d/json-to-xlsx.svg)](https://crates.io/crates/json-to-xlsx)
 [![docs.rs](https://img.shields.io/docsrs/json-to-xlsx)](https://docs.rs/json-to-xlsx)
 
-Convert a JSON array of objects to an Excel (`.xlsx`) file.
+Convert a JSON array of objects to an Excel (`.xlsx`) file. No COM/OLE/LibreOffice dependencies — works on Linux, macOS, and Windows.
 
 ## Installation
 

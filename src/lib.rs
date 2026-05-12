@@ -26,7 +26,9 @@ pub mod result;
 /// [`XlsxExportError::JsonError`] on malformed JSON, and
 /// [`XlsxExportError::IoError`] / [`XlsxExportError::ZipError`] on write failures.
 ///
-/// # Example
+/// # Examples
+///
+/// Write to a file:
 ///
 /// ```no_run
 /// use std::fs::File;
@@ -37,6 +39,21 @@ pub mod result;
 ///     let input = BufReader::new(File::open("input.json")?);
 ///     let output = File::create("output.xlsx")?;
 ///     json_to_xlsx(input, output)?;
+///     Ok(())
+/// }
+/// ```
+///
+/// Write to an in-memory buffer (useful for HTTP responses or tests):
+///
+/// ```
+/// use std::io::Cursor;
+/// use json_to_xlsx::json_to_xlsx;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let json = br#"[{"name":"Alice","score":99}]"#;
+///     let mut buf = Vec::new();
+///     json_to_xlsx(Cursor::new(json), &mut buf)?;
+///     // buf now contains a valid .xlsx file
 ///     Ok(())
 /// }
 /// ```

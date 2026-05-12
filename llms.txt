@@ -1,0 +1,80 @@
+# json-to-xlsx
+
+A Rust library that converts a JSON array of objects to an Excel (.xlsx) file.
+
+## API
+
+One public function:
+
+```rust
+pub fn json_to_xlsx(reader: impl Read, output: impl Write) -> Result<(), XlsxExportError>
+```
+
+## When to use
+
+- Export query results or API responses to Excel from a Rust service
+- CLI tools that need .xlsx output
+- Testing xlsx output in memory with `Cursor<Vec<u8>>`
+- Any situation where you need xlsx without COM/OLE/LibreOffice dependencies
+
+## Input format
+
+The JSON must be an array of objects. Keys from the first object become column
+headers (insertion order preserved). Missing fields in later rows produce empty
+cells. Non-object elements are silently skipped.
+
+```json
+[
+  { "name": "Alice", "age": 30, "active": true },
+  { "name": "Bob",   "age": 25 }
+]
+```
+
+## Type mapping
+
+- string  → string cell
+- number  → numeric cell (Excel treats it as a number, not text)
+- boolean → 1 or 0
+- null    → empty cell
+- object / array → serialized as a JSON string
+
+## Error variants
+
+- NotAnArray     — root JSON value is not an array
+- EmptyArray     — the array has no elements
+- ExpectedObject — first element is not an object
+- JsonError      — malformed JSON
+- IoError        — write failure
+- ZipError       — zip write failure
+
+## Examples
+
+Write to a file:
+
+```rust
+use std::fs::File;
+use std::io::BufReader;
+use json_to_xlsx::json_to_xlsx;
+
+let input = BufReader::new(File::open("input.json")?);
+let output = File::create("output.xlsx")?;
+json_to_xlsx(input, output)?;
+```
+
+Write to an in-memory buffer:
+
+```rust
+use std::io::Cursor;
+use json_to_xlsx::json_to_xlsx;
+
+let json = br#"[{"name":"Alice","score":99}]"#;
+let mut buf = Vec::new();
+json_to_xlsx(Cursor::new(json), &mut buf)?;
+// buf now contains a valid .xlsx file
+```
+
+## Crate
+
+- crates.io: https://crates.io/crates/json-to-xlsx
+- docs.rs:   https://docs.rs/json-to-xlsx
+- repo:      https://github.com/lukasmatta/json-to-xlsx
