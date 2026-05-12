@@ -22,3 +22,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+Benchmarks
+----------
+
+The benchmarks compare conversion time across different row counts (100 / 10 000 / 100 000 rows, 6 columns each).
+
+Run them with:
+
+```sh
+cargo bench
+```
+
+An HTML report with graphs is written to `target/criterion/report/index.html` after each run, making it easy to compare results before and after code changes.
