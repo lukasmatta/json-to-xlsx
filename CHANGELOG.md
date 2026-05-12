@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/lukasmatta/json-to-xlsx/compare/v0.1.3...v0.1.4) - 2026-05-12
+
+### Other
+
+- Improve description, add llms.txt
+- Extend README.md
+- Add downloads badge
+- Improve benchmark
+
 ## [0.1.3](https://github.com/lukasmatta/json-to-xlsx/compare/v0.1.2...v0.1.3) - 2026-04-23
 
 ### Fixed
